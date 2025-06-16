@@ -1,3 +1,5 @@
+// Archivo: src/components/PosPage.jsx
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, X, PlusCircle, MinusCircle, ShoppingCart } from "lucide-react";
 
@@ -25,6 +27,16 @@ export default function PosPage({ currentUser }) {
   const [cart, setCart] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("Efectivo");
 
+  const formatCurrency = (value) => {
+    const number = parseFloat(value);
+    if (isNaN(number)) return "$0";
+    return number.toLocaleString("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    });
+  };
+
   const fetchInventory = useCallback(async () => {
     try {
       const response = await fetch(
@@ -32,13 +44,18 @@ export default function PosPage({ currentUser }) {
       );
       const data = await response.json();
       if (data.status === "success") {
-        setInventory(data.inventory);
-        setFilteredInventory(data.inventory);
+        const inventoryWithPrice = data.inventory.map((p) => ({
+          ...p,
+          ValorSinIVA:
+            parseFloat(p.Valor) / (1 + parseFloat(p.Porcentaje_IVA) / 100),
+        }));
+        setInventory(inventoryWithPrice);
+        setFilteredInventory(inventoryWithPrice);
       } else {
         alert("Error al cargar el inventario: " + data.message);
       }
     } catch (error) {
-      alert("No se pudo conectar con el servidor para obtener el inventario.");
+      alert("Error de conexión al cargar el inventario.");
     }
   }, []);
 
@@ -47,15 +64,11 @@ export default function PosPage({ currentUser }) {
   }, [fetchInventory]);
 
   useEffect(() => {
-    if (searchTerm === "") {
-      setFilteredInventory(inventory);
-    } else {
-      const lowercasedFilter = searchTerm.toLowerCase();
-      const filtered = inventory.filter((item) =>
-        item.Nombre_Inv.toLowerCase().includes(lowercasedFilter)
-      );
-      setFilteredInventory(filtered);
-    }
+    const lowercasedFilter = searchTerm.toLowerCase();
+    const filtered = inventory.filter((item) =>
+      item.Nombre_Inv.toLowerCase().includes(lowercasedFilter)
+    );
+    setFilteredInventory(filtered);
   }, [searchTerm, inventory]);
 
   const addToCart = (product) => {
@@ -69,9 +82,8 @@ export default function PosPage({ currentUser }) {
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
-      } else {
-        return [...currentCart, { ...product, quantity: 1 }];
       }
+      return [...currentCart, { ...product, quantity: 1 }];
     });
   };
 
@@ -103,7 +115,6 @@ export default function PosPage({ currentUser }) {
       alert("El carrito está vacío.");
       return;
     }
-
     const saleData = {
       ID_CL: 1,
       Medio_Pago: paymentMethod,
@@ -118,7 +129,6 @@ export default function PosPage({ currentUser }) {
       })),
       Tipo: "Venta",
     };
-
     try {
       const response = await fetch(
         "https://awohconsulting.com/api/create_invoice.php",
@@ -130,7 +140,6 @@ export default function PosPage({ currentUser }) {
       );
       const result = await response.json();
       alert(result.message);
-
       if (result.status === "success") {
         setCart([]);
         setPaymentMethod("Efectivo");
@@ -145,6 +154,7 @@ export default function PosPage({ currentUser }) {
     <div>
       <h1 className="text-3xl font-bold text-gray-800">Punto de Venta (POS)</h1>
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Columna de Productos */}
         <div className="lg:col-span-2">
           <SearchBar onSearch={setSearchTerm} />
           <div className="mt-4 bg-white p-4 rounded-lg shadow-md max-h-[60vh] overflow-y-auto">
@@ -152,19 +162,19 @@ export default function PosPage({ currentUser }) {
               <thead className="sticky top-0 bg-gray-50">
                 <tr>
                   <th className="p-3">Producto</th>
-                  <th className="p-3">Precio</th>
-                  <th className="p-3">Stock</th>
+                  <th className="p-3">Precio sin IVA</th>
+                  <th className="p-3">Precio Venta</th>
                   <th className="p-3">Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredInventory.map((item) => (
                   <tr key={item.ID_Inv} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.Nombre_Inv}</td>
-                    <td className="p-3">
-                      ${parseFloat(item.Valor).toLocaleString("es-CO")}
+                    <td className="p-3 font-semibold">{item.Nombre_Inv}</td>
+                    <td className="p-3">{formatCurrency(item.ValorSinIVA)}</td>
+                    <td className="p-3 font-bold">
+                      {formatCurrency(item.Valor)}
                     </td>
-                    <td className="p-3">{item.Stock}</td>
                     <td className="p-3">
                       <button
                         onClick={() => addToCart(item)}
@@ -180,6 +190,8 @@ export default function PosPage({ currentUser }) {
             </table>
           </div>
         </div>
+
+        {/* Columna del Carrito */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex items-center gap-3 mb-4">
             <ShoppingCart className="text-purple-600" size={28} />
@@ -197,7 +209,7 @@ export default function PosPage({ currentUser }) {
                   <div>
                     <p className="font-semibold">{item.Nombre_Inv}</p>
                     <p className="text-sm text-gray-500">
-                      ${parseFloat(item.Valor).toLocaleString("es-CO")}
+                      {formatCurrency(item.Valor)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -232,7 +244,7 @@ export default function PosPage({ currentUser }) {
           <div className="mt-6 border-t pt-4">
             <div className="flex justify-between font-bold text-xl mb-4">
               <span>Total:</span>
-              <span>${cartTotal.toLocaleString("es-CO")}</span>
+              <span>{formatCurrency(cartTotal)}</span>
             </div>
             <div className="mb-4">
               <label className="block font-semibold mb-2">Medio de Pago:</label>

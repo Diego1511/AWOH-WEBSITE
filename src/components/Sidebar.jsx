@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   ChevronLeft,
   LogOut,
+  Package, // <-- Asegúrate de que este icono esté importado
 } from "lucide-react";
 
 export default function Sidebar({
@@ -18,6 +19,9 @@ export default function Sidebar({
     { label: "Dashboard", icon: LayoutDashboard, page: "home" },
     { label: "Administrar Usuario", icon: UserCog, page: "manageUser" },
     { label: "Acceder a POS", icon: ShoppingCart, page: "pos" },
+    // --- CORRECCIÓN CLAVE ---
+    // Esta es la línea que faltaba. Añade la nueva opción al menú.
+    { label: "Gestionar Inventario", icon: Package, page: "inventory" },
   ];
 
   return (

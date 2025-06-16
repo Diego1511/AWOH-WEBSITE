@@ -1,9 +1,7 @@
-// --- Archivo: src/components/DashboardLayout.jsx ---
-// Asegúrate de que este archivo esté exactamente así.
-
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
-import PosPage from "./PosPage"; // Importación clave
+import PosPage from "./PosPage";
+import InventoryPage from "./InventoryPage"; // <-- Importación del nuevo componente
 
 export default function DashboardLayout({ currentUser, onLogout }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -41,6 +39,9 @@ export default function DashboardLayout({ currentUser, onLogout }) {
           </div>
         )}
         {activePage === "pos" && <PosPage currentUser={currentUser} />}
+        {/* --- CORRECCIÓN CLAVE --- */}
+        {/* Esta condición se asegura de mostrar la página de inventario cuando se selecciona. */}
+        {activePage === "inventory" && <InventoryPage />}
       </main>
     </div>
   );
