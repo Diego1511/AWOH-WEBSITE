@@ -26,6 +26,13 @@ export default function PosPage({ currentUser }) {
   const [filteredInventory, setFilteredInventory] = useState([]);
   const [cart, setCart] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("Efectivo");
+  // --- ESTADOS NUEVOS ---
+  const [isNamedInvoice, setIsNamedInvoice] = useState(false); // Controla el checkbox
+  const [customerData, setCustomerData] = useState({
+    nombre: "",
+    documento: "",
+    correo: "",
+  });
 
   const formatCurrency = (value) => {
     const number = parseFloat(value);
@@ -50,7 +57,6 @@ export default function PosPage({ currentUser }) {
             parseFloat(p.Valor) / (1 + parseFloat(p.Porcentaje_IVA) / 100),
         }));
         setInventory(inventoryWithPrice);
-        setFilteredInventory(inventoryWithPrice);
       } else {
         alert("Error al cargar el inventario: " + data.message);
       }
@@ -71,6 +77,11 @@ export default function PosPage({ currentUser }) {
     setFilteredInventory(filtered);
   }, [searchTerm, inventory]);
 
+  const handleCustomerChange = (e) => {
+    const { name, value } = e.target;
+    setCustomerData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const addToCart = (product) => {
     setCart((currentCart) => {
       const existingProduct = currentCart.find(
@@ -86,13 +97,11 @@ export default function PosPage({ currentUser }) {
       return [...currentCart, { ...product, quantity: 1 }];
     });
   };
-
   const removeFromCart = (productId) => {
     setCart((currentCart) =>
       currentCart.filter((item) => item.ID_Inv !== productId)
     );
   };
-
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
@@ -115,8 +124,8 @@ export default function PosPage({ currentUser }) {
       alert("El carrito está vacío.");
       return;
     }
-    const saleData = {
-      ID_CL: 1,
+
+    let saleData = {
       Medio_Pago: paymentMethod,
       Forma_Pago: "Contado",
       Total: cartTotal,
@@ -128,7 +137,20 @@ export default function PosPage({ currentUser }) {
         valor_unitario: item.Valor,
       })),
       Tipo: "Venta",
+      Cliente: { nombre: "", documento: "", correo: "" }, // Por defecto, se usa el cliente genérico
     };
+
+    // Si la factura es con nombre, valida y añade los datos del cliente
+    if (isNamedInvoice) {
+      if (!customerData.documento || !customerData.nombre) {
+        alert(
+          "Si la factura es con nombre, el nombre y documento del cliente son obligatorios."
+        );
+        return;
+      }
+      saleData.Cliente = customerData;
+    }
+
     try {
       const response = await fetch(
         "https://awohconsulting.com/api/create_invoice.php",
@@ -143,6 +165,8 @@ export default function PosPage({ currentUser }) {
       if (result.status === "success") {
         setCart([]);
         setPaymentMethod("Efectivo");
+        setCustomerData({ nombre: "", documento: "", correo: "" });
+        setIsNamedInvoice(false);
         fetchInventory();
       }
     } catch (error) {
@@ -154,12 +178,11 @@ export default function PosPage({ currentUser }) {
     <div>
       <h1 className="text-3xl font-bold text-gray-800">Punto de Venta (POS)</h1>
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Columna de Productos */}
         <div className="lg:col-span-2">
           <SearchBar onSearch={setSearchTerm} />
           <div className="mt-4 bg-white p-4 rounded-lg shadow-md max-h-[60vh] overflow-y-auto">
             <table className="w-full text-left">
-              <thead className="sticky top-0 bg-gray-50">
+              <thead className="sticky top-0 bg-gray-50 z-10">
                 <tr>
                   <th className="p-3">Producto</th>
                   <th className="p-3">Precio sin IVA</th>
@@ -190,14 +213,12 @@ export default function PosPage({ currentUser }) {
             </table>
           </div>
         </div>
-
-        {/* Columna del Carrito */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-md flex flex-col">
           <div className="flex items-center gap-3 mb-4">
             <ShoppingCart className="text-purple-600" size={28} />
             <h2 className="text-2xl font-bold text-gray-800">Carrito</h2>
           </div>
-          <div className="max-h-[40vh] overflow-y-auto pr-2">
+          <div className="flex-grow max-h-[40vh] overflow-y-auto pr-2">
             {cart.length === 0 ? (
               <p className="text-gray-500">No hay productos en el carrito.</p>
             ) : (
@@ -241,29 +262,78 @@ export default function PosPage({ currentUser }) {
               ))
             )}
           </div>
-          <div className="mt-6 border-t pt-4">
-            <div className="flex justify-between font-bold text-xl mb-4">
-              <span>Total:</span>
-              <span>{formatCurrency(cartTotal)}</span>
+          <div className="mt-auto pt-4 space-y-4">
+            <div className="border-t pt-4">
+              <div className="flex items-center gap-3 mb-3">
+                <input
+                  type="checkbox"
+                  id="namedInvoice"
+                  checked={isNamedInvoice}
+                  onChange={(e) => setIsNamedInvoice(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <label
+                  htmlFor="namedInvoice"
+                  className="font-semibold select-none"
+                >
+                  Factura con nombre
+                </label>
+              </div>
+              {isNamedInvoice && (
+                <div className="space-y-2 p-3 bg-slate-50 rounded-md border">
+                  <input
+                    type="text"
+                    name="documento"
+                    placeholder="Documento del Cliente"
+                    value={customerData.documento}
+                    onChange={handleCustomerChange}
+                    className="w-full p-2 border rounded-md"
+                  />
+                  <input
+                    type="text"
+                    name="nombre"
+                    placeholder="Nombre del Cliente"
+                    value={customerData.nombre}
+                    onChange={handleCustomerChange}
+                    className="w-full p-2 border rounded-md"
+                  />
+                  <input
+                    type="email"
+                    name="correo"
+                    placeholder="Correo del Cliente (Opcional)"
+                    value={customerData.correo}
+                    onChange={handleCustomerChange}
+                    className="w-full p-2 border rounded-md"
+                  />
+                </div>
+              )}
             </div>
-            <div className="mb-4">
-              <label className="block font-semibold mb-2">Medio de Pago:</label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
+            <div className="border-t pt-4">
+              <div className="flex justify-between font-bold text-xl mb-4">
+                <span>Total:</span>
+                <span>{formatCurrency(cartTotal)}</span>
+              </div>
+              <div className="mb-4">
+                <label className="block font-semibold mb-2">
+                  Medio de Pago:
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option>Efectivo</option>
+                  <option>Transferencia</option>
+                </select>
+              </div>
+              <button
+                onClick={handleFinalizeSale}
+                className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-all shadow-lg"
+                disabled={cart.length === 0}
               >
-                <option>Efectivo</option>
-                <option>Transferencia</option>
-              </select>
+                Finalizar Venta
+              </button>
             </div>
-            <button
-              onClick={handleFinalizeSale}
-              className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-all shadow-lg"
-              disabled={cart.length === 0}
-            >
-              Finalizar Venta
-            </button>
           </div>
         </div>
       </div>

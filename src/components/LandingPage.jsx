@@ -13,7 +13,6 @@ import {
   User,
 } from "lucide-react";
 
-// Componentes pequeños que solo se usan en la Landing Page
 const FeatureIcon = ({ icon: Icon, title, description }) => (
   <div className="flex flex-col items-center text-center p-4 transform transition-all duration-300 hover:scale-105">
     <div className="relative flex items-center justify-center w-16 h-16 mb-4">
@@ -85,7 +84,6 @@ export default function LandingPage({ setPage }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const contactForm = useRef();
   const [statusMessage, setStatusMessage] = useState("");
-
   const handleNavClick = (e, targetId) => {
     e.preventDefault();
     const targetElement = document.getElementById(targetId);
@@ -97,25 +95,21 @@ export default function LandingPage({ setPage }) {
       setIsMenuOpen(false);
     }
   };
-
   const handleContactSubmit = (e) => {
     e.preventDefault();
     setStatusMessage("Enviando...");
-    // La lógica de EmailJS iría aquí.
     setTimeout(() => {
       setStatusMessage("¡Mensaje enviado con éxito!");
       if (contactForm.current) contactForm.current.reset();
       setTimeout(() => setStatusMessage(""), 5000);
     }, 1000);
   };
-
   const navLinks = [
     { href: "#services", label: "Servicios" },
     { href: "#about", label: "Nosotros" },
     { href: "#testimonials", label: "Testimonios" },
     { href: "#contact", label: "Contacto" },
   ];
-
   return (
     <div
       className="bg-slate-50 font-sans antialiased"
@@ -198,7 +192,6 @@ export default function LandingPage({ setPage }) {
           </div>
         )}
       </header>
-
       <main id="home" className="relative overflow-hidden">
         <div className="absolute inset-0 bg-white -z-20"></div>
         <div className="absolute top-0 left-0 w-full h-full -z-10">
@@ -239,7 +232,6 @@ export default function LandingPage({ setPage }) {
           </div>
         </div>
       </main>
-
       <section id="about" className="bg-white py-20">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
@@ -431,7 +423,6 @@ export default function LandingPage({ setPage }) {
           </div>
         </div>
       </section>
-
       <footer
         className="bg-gray-800 text-white"
         style={{ backgroundColor: "#2C3E50" }}

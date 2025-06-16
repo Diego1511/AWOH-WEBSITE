@@ -2,7 +2,6 @@ import React, { useState } from "react";
 
 export default function AuthPage({ setPage, onLoginSuccess }) {
   const [authMode, setAuthMode] = useState("login");
-
   const handleLogin = async (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -22,12 +21,10 @@ export default function AuthPage({ setPage, onLoginSuccess }) {
       alert("No se pudo conectar con el servidor.");
     }
   };
-
   const handleRegister = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
-
     if (data.email !== data.confirm_email) {
       alert("Los correos electrónicos no coinciden.");
       return;
@@ -37,7 +34,6 @@ export default function AuthPage({ setPage, onLoginSuccess }) {
       return;
     }
     const { confirm_email, confirm_password, ...userData } = data;
-
     try {
       const response = await fetch(
         "https://awohconsulting.com/api/register.php",
@@ -56,7 +52,6 @@ export default function AuthPage({ setPage, onLoginSuccess }) {
       alert("No se pudo conectar con el servidor.");
     }
   };
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
