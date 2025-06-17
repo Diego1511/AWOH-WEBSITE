@@ -7,6 +7,7 @@ import PosPage from "./PosPage";
 import InventoryPage from "./InventoryPage";
 import InvoiceHistoryPage from "./InvoiceHistoryPage";
 import DashboardPage from "./DashboardPage";
+import ProvidersPage from "./ProvidersPage";
 
 // Componente placeholder para la sección "Administrar Usuario"
 const ManageUserPage = () => (
@@ -37,6 +38,8 @@ export default function DashboardLayout({ currentUser, onLogout }) {
         return <ManageUserPage />;
       default:
         return <DashboardPage currentUser={currentUser} />;
+      case "providers":
+        return <ProvidersPage />;
     }
   };
 

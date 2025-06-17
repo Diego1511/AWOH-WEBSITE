@@ -156,7 +156,7 @@ export default function DashboardPage({ currentUser }) {
         )}
         <button
           onClick={handleFilterChange}
-          className="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700"
+          className="w-32 bg-gradient-to-r from-purple-600 to-blue-500 text-white font-bold py-4 rounded-lg hover:opacity-90 transition-opacity shadow-lg"
         >
           Aplicar
         </button>
